@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import { useForm } from "react-hook-form"
 import { yupResolver } from "@hookform/resolvers/yup"
 import { registerSchema } from "../../utils/rules"
@@ -8,6 +8,9 @@ import { registerAccount } from "../../apis/auth.api"
 import _ from "lodash"
 import { isAxiosUnprocessableEntity } from "../../utils/utils"
 import { ApiResponse } from "../../types/utils.type"
+import { useContext } from "react"
+import { AppContext } from "../../contexts/app.context"
+import Button from "../../components/Button/Button"
 
 export type RegisterInput = {
   email: string
@@ -16,6 +19,8 @@ export type RegisterInput = {
 }
 
 export default function Register() {
+  const { setIsAuthenticated, setProfile } = useContext(AppContext)
+  const navigate = useNavigate()
   const {
     register,
     handleSubmit,
@@ -31,7 +36,9 @@ export default function Register() {
     _.omit(data, ["confirm_password"])
     registerAccountMutation.mutate(data, {
       onSuccess: (data) => {
-        console.log(data)
+        setProfile(data.data.data.user)
+        setIsAuthenticated(true)
+        navigate("/")
       },
       onError: (error) => {
         if (isAxiosUnprocessableEntity<ApiResponse<Omit<RegisterInput, "confirm_password">>>(error)) {
@@ -85,12 +92,14 @@ export default function Register() {
                 placeholder='Confirm Password'
               />
               <div className='mt-3'>
-                <button
+                <Button
+                  isLoading={registerAccountMutation.isPending}
+                  disabled={registerAccountMutation.isPending}
                   type='submit'
                   className='flex mt-2 w-full items-center justify-center bg-red-500 py-4 px-2 text-sm uppercase text-white hover:bg-red-600'
                 >
                   Đăng ký
-                </button>
+                </Button>
               </div>
               <div className='mt-8 flex items-center justify-center'>
                 <span className='text-gray-400'>Bạn chưa có tài khoản?</span>

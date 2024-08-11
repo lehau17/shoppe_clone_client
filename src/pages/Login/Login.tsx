@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import Input from "../../components/Input"
 import { useForm } from "react-hook-form"
 import { yupResolver } from "@hookform/resolvers/yup"
@@ -7,6 +7,11 @@ import { useMutation } from "@tanstack/react-query"
 import { loginAccount } from "../../apis/auth.api"
 import { isAxiosUnprocessableEntity } from "../../utils/utils"
 import { ApiResponse } from "../../types/utils.type"
+import { useContext } from "react"
+import { AppContext } from "../../contexts/app.context"
+import Button from "../../components/Button/Button"
+import { AxiosResponse } from "axios"
+import { AuthResponse } from "../../types/auth.type"
 
 export type LoginInput = {
   email: string
@@ -14,6 +19,8 @@ export type LoginInput = {
 }
 
 export default function Login() {
+  const { setIsAuthenticated, setProfile } = useContext(AppContext)
+  const navigate = useNavigate()
   const {
     register,
     handleSubmit,
@@ -27,8 +34,10 @@ export default function Login() {
 
   const onSubmit = handleSubmit((data) => {
     loginAccountMutation.mutate(data, {
-      onSuccess: (data) => {
-        console.log(data)
+      onSuccess: (data: AxiosResponse<AuthResponse>) => {
+        setIsAuthenticated(true)
+        setProfile(data.data.data.user)
+        navigate("/")
       },
       onError: (error) => {
         if (isAxiosUnprocessableEntity<ApiResponse<LoginInput>>(error)) {
@@ -51,19 +60,7 @@ export default function Login() {
           <div className='lg:col-span-2 lg:col-start-4'>
             <form className='rounded bg-white p-10 shadow-sm' noValidate onSubmit={onSubmit}>
               <div className='text-2xl'>Đăng nhập</div>
-              {/* <input
-                name='email'
-                type='email'
-                className='mt-6 outline-none block w-full py-2 rounded-sm pl-4 border border-gray-300 focus:border-gray-600 focus:shadow-sm'
-                placeholder='Email'
-              />
-              <input
-                name='password'
-                type='password'
-                className='mt-6 block outline-none w-full py-2 pl-4 border border-gray-300 focus:border-gray-600 focus:shadow-sm'
-                placeholder='Password'
-                autoComplete='on'
-              /> */}
+
               <Input
                 name='email'
                 register={register}
@@ -82,12 +79,14 @@ export default function Login() {
                 placeholder='password'
               />
               <div className='mt-3'>
-                <button
+                <Button
+                  isLoading={loginAccountMutation.isPending}
+                  disabled={loginAccountMutation.isPending}
                   type='submit'
-                  className='flex mt-8 w-full items-center justify-center bg-red-500 py-4 px-2 text-sm uppercase text-white hover:bg-red-600'
+                  className='flex mt-8 w-full items-center justify-center bg-red-500 py-2 px-2 text-sm uppercase text-white hover:bg-red-600'
                 >
                   Đăng nhập
-                </button>
+                </Button>
               </div>
               <div className='mt-8 flex items-center justify-center'>
                 <span className='text-gray-400'>Bạn chưa có tài khoản?</span>
